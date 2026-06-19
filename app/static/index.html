@@ -11,15 +11,56 @@
       <section class="panel">
         <p class="eyebrow">VincentWorkPlaceVer2.0</p>
         <h1>Source Classifier</h1>
+        <p class="lede">Paste a source, review the suggested classification, then sync only the suggested fields to Notion.</p>
         <label>Title <input id="title" /></label>
         <label>URL <input id="url" /></label>
         <label>Source Text <textarea id="text" rows="10"></textarea></label>
-        <button id="classify">Analyze Source</button>
+        <div class="actions">
+          <button id="classify">Analyze Source</button>
+          <span id="status" class="status">Waiting for source input.</span>
+        </div>
       </section>
-      <section class="panel">
-        <h2>Suggested Classification</h2>
-        <pre id="result">{}</pre>
-        <button id="sync" disabled>Sync to Notion</button>
+      <section class="panel review-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Review Before Sync</p>
+            <h2>Suggested Classification</h2>
+          </div>
+          <button id="sync" disabled>Sync to Notion</button>
+        </div>
+
+        <div class="review-grid">
+          <label>Source Type <input id="source-type" /></label>
+          <label>
+            Confidence
+            <select id="confidence">
+              <option>High</option>
+              <option>Medium</option>
+              <option>Low</option>
+            </select>
+          </label>
+          <label>
+            Classification Status
+            <select id="classification-status">
+              <option>Suggested</option>
+              <option>Needs Review</option>
+            </select>
+          </label>
+          <label>Suggested Theme <input id="suggested-theme" /></label>
+          <label>Suggested Geography <input id="suggested-geography" /></label>
+          <label>Suggested Asset Class <input id="suggested-asset-class" /></label>
+          <label>Suggested Entities <input id="suggested-entities" /></label>
+          <label>Taxonomy L1 <input id="taxonomy-l1" /></label>
+          <label>Taxonomy L2 <input id="taxonomy-l2" /></label>
+          <label>Taxonomy L3 <input id="taxonomy-l3" /></label>
+        </div>
+
+        <label>Reason <textarea id="classification-reason" rows="4"></textarea></label>
+
+        <details>
+          <summary>Raw classification JSON</summary>
+          <pre id="raw-json">{}</pre>
+        </details>
       </section>
     </main>
     <script src="/app.js"></script>
