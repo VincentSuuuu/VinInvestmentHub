@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Source Classifier</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="panel">
+        <p class="eyebrow">VincentWorkPlaceVer2.0</p>
+        <h1>Source Classifier</h1>
+        <label>Title <input id="title" /></label>
+        <label>URL <input id="url" /></label>
+        <label>Source Text <textarea id="text" rows="10"></textarea></label>
+        <button id="classify">Analyze Source</button>
+      </section>
+      <section class="panel">
+        <h2>Suggested Classification</h2>
+        <pre id="result">{}</pre>
+        <button id="sync" disabled>Sync to Notion</button>
+      </section>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>
