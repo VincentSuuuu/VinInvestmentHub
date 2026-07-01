@@ -17,3 +17,10 @@ def test_settings_accept_required_values():
 
     assert settings.notion_token == "secret"
     assert settings.notion_sources_database_id == "2383b3ce-d227-8225-92d4-8765979cd4a8"
+
+
+def test_settings_can_load_without_legacy_sources_for_dry_run():
+    settings = Settings(require_notion_token=False, require_sources_database=False)
+
+    assert settings.notion_token == ""
+    assert settings.rsshub_base_url == "https://rsshub.rssforever.com"

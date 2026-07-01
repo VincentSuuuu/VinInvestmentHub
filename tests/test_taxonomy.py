@@ -4,13 +4,13 @@ from app.taxonomy import normalize_suggestions
 def test_normalize_removes_unknown_values():
     result = normalize_suggestions(
         {
-            "theme": ["US-China Trade", "Unknown Theme"],
+            "theme": ["US-China Trade", "World Macro", "Unknown Theme"],
             "geography": ["US", "Mars"],
             "asset_class": ["Macro", "Private Credit"],
         }
     )
 
-    assert result["theme"] == ["US-China Trade"]
+    assert result["theme"] == ["US-China Trade", "World Macro"]
     assert result["geography"] == ["US"]
     assert result["asset_class"] == ["Macro"]
 

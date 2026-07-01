@@ -2,6 +2,7 @@ VALID_THEMES = {
     "US-China Trade",
     "China Macro",
     "US Macro",
+    "World Macro",
     "Policy",
     "AI",
     "EV",
