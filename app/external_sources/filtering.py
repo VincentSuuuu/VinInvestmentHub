@@ -40,6 +40,10 @@ KEYWORD_WEIGHTS: tuple[tuple[str, int], ...] = (
     ("GDP", 3),
     ("全球经济", 3),
     ("全球市场", 3),
+    ("AI", 3),
+    ("大模型", 3),
+    ("Anthropic", 2),
+    ("Claude", 2),
     ("国际货币基金组织", 3),
     ("世界银行", 3),
     ("BREAKING", 4),
@@ -143,7 +147,23 @@ def infer_topics(text: str, defaults: tuple[str, ...] = ()) -> tuple[str, ...]:
         ),
         ("政策", ("政策", "监管", "法案", "制裁", "禁令", "rule", "policy", "sanction", "ban")),
         ("地缘政治", ("伊朗", "以色列", "中东", "战争", "袭击", "导弹", "war", "attack", "missile")),
-        ("AI", ("AI", "人工智能", "芯片", "半导体", "Nvidia", "GPU", "semiconductor")),
+        (
+            "AI",
+            (
+                "AI",
+                "人工智能",
+                "大模型",
+                "Anthropic",
+                "Claude",
+                "OpenAI",
+                "LLM",
+                "芯片",
+                "半导体",
+                "Nvidia",
+                "GPU",
+                "semiconductor",
+            ),
+        ),
         ("EV", ("电动车", "新能源车", "EV", "electric vehicle")),
         ("财政", ("财政", "预算", "赤字", "Treasury", "debt ceiling", "fiscal")),
         ("货币", ("美联储", "央行", "降息", "加息", "利率", "Fed", "central bank", "rate cut", "rate hike")),
@@ -161,7 +181,23 @@ def infer_topics(text: str, defaults: tuple[str, ...] = ()) -> tuple[str, ...]:
 def infer_regions(text: str, defaults: tuple[str, ...] = ()) -> tuple[str, ...]:
     rules = (
         ("中国", ("中国", "北京", "上海", "香港", "人民币", "China", "Chinese", "Beijing", "Hong Kong", "yuan")),
-        ("美国", ("美国", "华盛顿", "美元", "美联储", "US ", "U.S.", "United States", "Washington", "Fed", "Trump")),
+        (
+            "美国",
+            (
+                "美国",
+                "华盛顿",
+                "美元",
+                "美联储",
+                "US ",
+                "U.S.",
+                "United States",
+                "Washington",
+                "White House",
+                "Treasury",
+                "Fed",
+                "Trump",
+            ),
+        ),
         ("全球", ("全球", "国际", "国际货币基金组织", "世界银行", "global", "world", "IMF", "World Bank", "G7", "G20")),
         ("欧洲", ("欧洲", "欧盟", "德国", "法国", "Europe", "EU", "ECB")),
         ("亚洲", ("亚洲", "日本", "韩国", "印度", "Asia", "Japan", "Korea", "India")),
@@ -224,7 +260,7 @@ def _contains_term(text: str, lower_text: str, term: str) -> bool:
         return term in text
     escaped = re.escape(term.lower())
     escaped = escaped.replace(r"\ ", r"\s+")
-    return re.search(rf"\b{escaped}\b", lower_text) is not None
+    return re.search(rf"(?<![a-z0-9_]){escaped}(?![a-z0-9_])", lower_text) is not None
 
 
 def _is_us_china_trade_signal(text: str) -> bool:

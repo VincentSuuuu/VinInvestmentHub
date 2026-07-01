@@ -31,7 +31,7 @@ $tasks = @(
 foreach ($task in $tasks) {
     $existing = Get-ScheduledTask -TaskName $task.Name -ErrorAction SilentlyContinue
     if ($existing) {
-        Unregister-ScheduledTask -TaskName $task.Name -Confirm:$false
+        Unregister-ScheduledTask -TaskName $task.Name -Confirm:$false -ErrorAction Stop
     }
 
     $trigger = New-ScheduledTaskTrigger -Daily -At $task.At
@@ -40,7 +40,8 @@ foreach ($task in $tasks) {
         -Action $action `
         -Trigger $trigger `
         -Settings $settings `
-        -Description $task.Description | Out-Null
+        -Description $task.Description `
+        -ErrorAction Stop | Out-Null
 }
 
 Get-ScheduledTask -TaskName "VinInvestmentHub Raw Signals Morning", "VinInvestmentHub Raw Signals Evening" |

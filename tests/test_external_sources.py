@@ -3,9 +3,9 @@ from datetime import datetime, timezone
 from app.external_sources.filtering import build_signal, score_importance
 from app.external_sources.models import FeedItem
 from app.external_sources.pipeline import collect_external_signals
-from app.external_sources.rss import parse_feed_xml
+from app.external_sources.rss import fetch_feed_xml, parse_feed_xml
 from app.external_sources.sources import build_default_sources
-from app.notion_raw_signals import RawSignalsNotionClient, build_raw_signal_properties
+from app.notion_raw_signals import RawSignalsNotionClient, build_raw_signal_properties, build_raw_signal_refresh_properties
 
 
 def test_score_importance_keeps_major_policy_events():
@@ -31,6 +31,13 @@ def test_ascii_short_terms_use_word_boundaries():
     assert "war" not in terms
 
 
+def test_ascii_terms_match_next_to_cjk_characters():
+    score, terms = score_importance("Anthropic发布AI模型，美国政策限制解除。")
+
+    assert score >= 5
+    assert "AI" in terms
+
+
 def test_parse_rss_feed_xml_for_caixin_item():
     source = build_default_sources()["caixin"]
     xml = """<?xml version="1.0"?>
@@ -52,6 +59,26 @@ def test_parse_rss_feed_xml_for_caixin_item():
     assert len(items) == 1
     assert items[0].title == "国务院宣布新的财政政策"
     assert items[0].published_at.tzinfo == timezone.utc
+
+
+def test_fetch_feed_xml_repairs_missing_charset_response(monkeypatch):
+    class FakeResponse:
+        encoding = "ISO-8859-1"
+        apparent_encoding = "utf-8"
+
+        def __init__(self):
+            self.content = "央行宣布降息".encode("utf-8")
+
+        def raise_for_status(self):
+            return None
+
+        @property
+        def text(self):
+            return self.content.decode(self.encoding)
+
+    monkeypatch.setattr("app.external_sources.rss.requests.get", lambda *args, **kwargs: FakeResponse())
+
+    assert fetch_feed_xml("https://example.com/rss") == "央行宣布降息"
 
 
 def test_build_signal_infers_notion_options_and_duplicate_key():
@@ -128,6 +155,22 @@ def test_chinese_trump_policy_item_infers_us_macro_without_source_default():
     assert "中国宏观" not in signal.suggested_topics
 
 
+def test_anthropic_large_model_item_infers_ai_topic():
+    source = build_default_sources()["caixin"]
+    item = FeedItem(
+        source_key=source.key,
+        source_name=source.display_name,
+        title="Anthropic最强模型解除出口限制",
+        url="https://www.caixin.com/2026-07-01/ai.html",
+        summary="Claude大模型恢复访问，美国商务部移除限制。",
+    )
+
+    signal = build_signal(item, source, min_score=3)
+
+    assert signal is not None
+    assert "AI" in signal.suggested_topics
+
+
 def test_collect_external_signals_deduplicates_with_fixture_fetcher():
     sources = build_default_sources()
     xml = """<rss version="2.0"><channel>
@@ -197,6 +240,23 @@ def test_build_raw_signal_properties_matches_phase6_schema():
     assert properties["来源"]["relation"][0]["id"] == source.source_registry_page_id
 
 
+def test_build_raw_signal_refresh_properties_preserves_status():
+    source = build_default_sources()["gelonghui"]
+    item = FeedItem(
+        source_key=source.key,
+        source_name=source.display_name,
+        title="央行宣布降息",
+        url="https://www.gelonghui.com/news/1",
+        summary="央行宣布降息，影响债券和人民币。",
+    )
+    signal = build_signal(item, source, min_score=3)
+
+    properties = build_raw_signal_refresh_properties(signal)
+
+    assert "状态" not in properties
+    assert properties["信号标题"]["title"][0]["text"]["content"] == "央行宣布降息"
+
+
 def test_raw_signals_client_skips_existing_duplicate_key(monkeypatch):
     class FakeResponse:
         def __init__(self, payload):
@@ -233,3 +293,56 @@ def test_raw_signals_client_skips_existing_duplicate_key(monkeypatch):
     assert calls[0]["url"] == "https://api.notion.com/v1/data_sources/raw-ds/query"
     assert calls[0]["headers"]["Notion-Version"] == "2026-03-11"
     assert calls[0]["json"]["filter"]["rich_text"]["equals"] == signal.duplicate_key
+
+
+def test_raw_signals_client_refreshes_existing_candidate(monkeypatch):
+    class FakeResponse:
+        def __init__(self, payload):
+            self.payload = payload
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return self.payload
+
+    calls = []
+
+    def fake_post(url, headers, json, timeout):
+        calls.append({"method": "post", "url": url, "json": json})
+        return FakeResponse(
+            {
+                "results": [
+                    {
+                        "id": "existing-page",
+                        "properties": {"状态": {"select": {"name": "New"}}},
+                    }
+                ]
+            }
+        )
+
+    def fake_patch(url, headers, json, timeout):
+        calls.append({"method": "patch", "url": url, "json": json})
+        return FakeResponse({"id": "existing-page"})
+
+    monkeypatch.setattr("app.notion_raw_signals.requests.post", fake_post)
+    monkeypatch.setattr("app.notion_raw_signals.requests.patch", fake_patch)
+    source = build_default_sources()["caixin"]
+    item = FeedItem(
+        source_key=source.key,
+        source_name=source.display_name,
+        title="Anthropic最强模型解除出口限制",
+        url="https://www.caixin.com/2026-07-01/ai.html",
+        summary="Claude大模型恢复访问，美国商务部移除限制。",
+    )
+    signal = build_signal(item, source, min_score=3)
+    client = RawSignalsNotionClient(token="secret", raw_signals_database_id="raw-db")
+
+    result = client.create_raw_signal(signal, refresh_existing=True)
+
+    assert result["existing"] is True
+    assert result["updated"] is True
+    assert calls[1]["method"] == "patch"
+    assert calls[1]["url"] == "https://api.notion.com/v1/pages/existing-page"
+    assert "状态" not in calls[1]["json"]["properties"]
+    assert {"name": "AI"} in calls[1]["json"]["properties"]["建议主题"]["multi_select"]

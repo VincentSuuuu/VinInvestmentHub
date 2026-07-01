@@ -4,11 +4,12 @@ Local automation tools for the Notion investment research OS. The original sourc
 
 Project plan checkpoint: `docs/project-plan.md`.
 Current project audit: `docs/adversarial-audit-2026-07-01.md`.
+Primary Git branch: `main`.
 
 ## Setup
 
 1. Copy `.env.example` to `.env`.
-2. Set `NOTION_TOKEN` and `NOTION_RAW_SIGNALS_DATABASE_ID` for Raw Signals writes. Keep `NOTION_RAW_SIGNALS_DATA_SOURCE_ID` blank unless a future Notion data-source API path is explicitly enabled. Set `NOTION_SOURCES_DATABASE_ID` only when using the legacy Source Classifier, and set `OPENAI_API_KEY` only when running AI-assisted classification.
+2. Set `NOTION_TOKEN`, `NOTION_RAW_SIGNALS_DATABASE_ID`, and `NOTION_KNOWLEDGE_DATABASE_ID` for Raw Signals writes and promotion. Keep `NOTION_RAW_SIGNALS_DATA_SOURCE_ID` blank unless a future Notion data-source API path is explicitly enabled. Set `NOTION_SOURCES_DATABASE_ID` only when using the legacy Source Classifier, and set `OPENAI_API_KEY` only when running AI-assisted classification.
 3. Install dependencies:
 
 ```powershell
@@ -51,6 +52,14 @@ Write candidates to Notion Raw Signals after `.env` is configured:
 C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe scripts\fetch_external_signals.py --source all --write-notion --max-candidates 10 --request-timeout 10
 ```
 
+Refresh duplicate candidates that are still unprocessed:
+
+```powershell
+C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe scripts\fetch_external_signals.py --source all --write-notion --refresh-existing-candidates --max-candidates 10 --request-timeout 10
+```
+
+Refreshing only updates rows still in `New`, `Needs Review`, or `Summarized`; it does not rewrite promoted, merged, or ignored decisions.
+
 The Notion integration behind `NOTION_TOKEN` must be shared with the `Vincent Investment Hub` page or at least the `候选信号 / Raw Signals` database in Notion's Share / Connections menu. If it is not shared, the public Notion API returns `object_not_found` / 404 even when the token itself is valid.
 
 The intake writes only candidate fields such as source, link, summary, duplicate key, suggested topic/region/asset class, and suggested importance. It does not promote content into formal Knowledge Items.
@@ -65,6 +74,37 @@ Raw Signals promotion stays simple during the test period:
 - `Ignore`: mark low-value duplicates or noisy market items as ignored.
 
 `RSSHUB_BASE_URL` defaults to a public RSSHub instance that was reachable during setup. For production reliability, point it at a self-hosted RSSHub instance.
+
+Install the twice-daily intake automation:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+.\scripts\install_external_signal_automation.ps1
+```
+
+The installer first tries Windows Task Scheduler. If Windows denies scheduler access, it starts a user-level watcher for the current Windows session and attempts user-level persistence. On this machine, Task Scheduler, HKCU Run, and Startup shortcut persistence can be blocked by Windows policy; when that happens the watcher still runs until the session exits, but it will need to be restarted after reboot/login. The watcher checks the 08:30-10:30 and 20:30-22:30 Asia/Shanghai windows and runs at most once per slot per day. Runner JSON logs are written as UTF-8 under `logs/external-signals/`.
+
+## Raw Signals Promotion Helper
+
+List candidates that still need review:
+
+```powershell
+C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe scripts\promote_raw_signal.py --list
+```
+
+Dry-run a promotion before writing:
+
+```powershell
+C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe scripts\promote_raw_signal.py --raw-page-id <raw_page_id> --action accept --dry-run
+```
+
+Available actions:
+
+- `accept`: create a formal `Knowledge Items` page and mark the Raw Signal `Promoted`.
+- `output`: create a `我的输出` draft and mark the Raw Signal `Promoted`.
+- `merge`: link to an existing Knowledge Item with `--knowledge-page-id` and mark the Raw Signal `Merged`.
+- `watch`: optionally link an Event Hub with `--event-hub-page-id` and keep the Raw Signal in `Needs Review`.
+- `ignore`: mark the Raw Signal `Ignored`.
 
 ## Notion Homepage Views
 

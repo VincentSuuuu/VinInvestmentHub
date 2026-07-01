@@ -31,6 +31,12 @@ def build_raw_signal_properties(signal: ExternalSignal):
     return properties
 
 
+def build_raw_signal_refresh_properties(signal: ExternalSignal):
+    properties = build_raw_signal_properties(signal)
+    properties.pop("状态", None)
+    return properties
+
+
 class RawSignalsNotionClient:
     def __init__(
         self,
@@ -44,9 +50,15 @@ class RawSignalsNotionClient:
         if not self.raw_signals_data_source_id and not self.raw_signals_database_id:
             raise ValueError("NOTION_RAW_SIGNALS_DATA_SOURCE_ID or NOTION_RAW_SIGNALS_DATABASE_ID is required")
 
-    def create_raw_signal(self, signal: ExternalSignal):
+    def create_raw_signal(self, signal: ExternalSignal, refresh_existing: bool = False):
         existing = self.find_existing_by_duplicate_key(signal.duplicate_key)
         if existing:
+            if refresh_existing and _is_refreshable_existing(existing):
+                return {
+                    "existing": True,
+                    "updated": True,
+                    "page": self.refresh_existing_candidate(existing["id"], signal),
+                }
             return {"existing": True, "page": existing}
         response = requests.post(
             "https://api.notion.com/v1/pages",
@@ -55,6 +67,16 @@ class RawSignalsNotionClient:
                 "parent": self._parent(),
                 "properties": build_raw_signal_properties(signal),
             },
+            timeout=30,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    def refresh_existing_candidate(self, page_id: str, signal: ExternalSignal):
+        response = requests.patch(
+            f"https://api.notion.com/v1/pages/{page_id}",
+            headers=self._headers(self._notion_version()),
+            json={"properties": build_raw_signal_refresh_properties(signal)},
             timeout=30,
         )
         response.raise_for_status()
@@ -116,3 +138,13 @@ def _multi_select(values: tuple[str, ...]):
 
 def _truncate(value: str, limit: int) -> str:
     return value if len(value) <= limit else value[: limit - 1] + "…"
+
+
+def _is_refreshable_existing(page: dict) -> bool:
+    status = (
+        page.get("properties", {})
+        .get("状态", {})
+        .get("select", {})
+        .get("name", "")
+    )
+    return status in {"New", "Needs Review", "Summarized"}

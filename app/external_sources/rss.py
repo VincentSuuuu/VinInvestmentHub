@@ -16,6 +16,8 @@ USER_AGENT = "VinInvestmentHub/0.1 (+notion raw signals)"
 def fetch_feed_xml(url: str, timeout: int = 30) -> str:
     response = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=timeout)
     response.raise_for_status()
+    if not response.encoding or response.encoding.lower() == "iso-8859-1":
+        response.encoding = response.apparent_encoding or "utf-8"
     return response.text
 
 

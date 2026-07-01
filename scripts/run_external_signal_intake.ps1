@@ -18,9 +18,10 @@ try {
         --limit-per-feed 8 `
         --max-age-days 30 `
         --max-candidates 5 `
+        --refresh-existing-candidates `
         --request-timeout 10 `
-        1> $StdoutLog `
-        2> $StderrLog
+        2> $StderrLog |
+        Set-Content -Path $StdoutLog -Encoding UTF8
 
     if ($LASTEXITCODE -ne 0) {
         throw "External signal intake failed with exit code $LASTEXITCODE. See $StderrLog"

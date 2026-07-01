@@ -29,6 +29,11 @@ def main(argv: list[str] | None = None) -> int:
         help="Maximum candidates to print or write. Use 0 for no cap.",
     )
     parser.add_argument("--write-notion", action="store_true", help="Create pages in the Raw Signals data source.")
+    parser.add_argument(
+        "--refresh-existing-candidates",
+        action="store_true",
+        help="Refresh duplicate Raw Signals that are still New, Needs Review, or Summarized.",
+    )
     parser.add_argument("--json", action="store_true", help="Print machine-readable JSON.")
     args = parser.parse_args(argv)
 
@@ -57,7 +62,7 @@ def main(argv: list[str] | None = None) -> int:
         signals = all_signals[: args.max_candidates]
 
     created = []
-    skipped_existing = []
+    existing_results = []
     if args.write_notion:
         if not settings.notion_token:
             raise SystemExit("NOTION_TOKEN is required when --write-notion is set")
@@ -67,9 +72,9 @@ def main(argv: list[str] | None = None) -> int:
             raw_signals_database_id=settings.notion_raw_signals_database_id,
         )
         for signal in signals:
-            result = client.create_raw_signal(signal)
+            result = client.create_raw_signal(signal, refresh_existing=args.refresh_existing_candidates)
             if result.get("existing"):
-                skipped_existing.append(result)
+                existing_results.append(result)
             else:
                 created.append(result)
 
@@ -82,8 +87,10 @@ def main(argv: list[str] | None = None) -> int:
         "count": len(signals),
         "total_candidate_count": len(all_signals),
         "write_notion": args.write_notion,
+        "refresh_existing_candidates": args.refresh_existing_candidates,
         "created_count": len(created),
-        "skipped_existing_count": len(skipped_existing),
+        "updated_existing_count": len([item for item in existing_results if item.get("updated")]),
+        "skipped_existing_count": len([item for item in existing_results if not item.get("updated")]),
         "errors": errors,
         "signals": [_serialize_signal(signal) for signal in signals],
     }
