@@ -7,6 +7,9 @@ Last updated: 2026-07-01
 - Product workspace: Notion `Vincent Investment Hub`.
 - Local implementation repo: `D:\Documents\NotionRebuild`.
 - Current local remote: `https://github.com/VincentSuuuu/VinInvestmentHub.git`.
+- Latest archived checkpoint commit: `1d8cf51 Archive phase 6 intake checkpoint`.
+- Latest Notion checkpoint page: `2026-07-01 Project Checkpoint - Phase 6 Archive`.
+- Latest Notion audit page: `https://app.notion.com/p/3903b3ced2278138afbee8ad1a169646`.
 - This file is the local development plan checkpoint. GitHub is not current until local changes are committed and pushed.
 
 ## Working Rule
@@ -14,6 +17,14 @@ Last updated: 2026-07-01
 Before changing the system, check this plan, `README.md`, and `git status`.
 Keep Notion as the product surface, and keep this repo as the automation/tooling surface.
 Raw Signals remain a candidate layer unless a later phase explicitly promotes them.
+
+Every substantial work session must be archived in three places before it is considered complete:
+
+1. Local Markdown: update `docs/project-plan.md`, `docs/work-log.md`, or a dated report under `docs/`.
+2. Notion: add a dated archive page under the top-level `Vincent Investment Hub` page or the relevant system page.
+3. GitHub: commit and push the local archive to `VincentSuuuu/VinInvestmentHub`.
+
+If one of the three archive targets is blocked, record the blocker in the local work log and do not mark the task fully complete.
 
 ## Phase Status
 
@@ -25,7 +36,7 @@ Raw Signals remain a candidate layer unless a later phase explicitly promotes th
 | Phase 4 | Legacy material migration, missed-item review, relations and tags | Complete first pass |
 | Phase 5 | Daily-use UX: simplified homepage, clear views, manual classification path | Complete first pass |
 | Phase 6 | Intelligence middleware: external news intake, Raw Signals, Memory Index | In progress |
-| Phase 7 | Stabilization, repo cleanup, GitHub handoff, long-term maintenance | Pending |
+| Phase 7 | Stabilization, repo cleanup, GitHub handoff, long-term maintenance | Started |
 
 ## Phase 6 Breakdown
 
@@ -59,3 +70,9 @@ Raw Signals remain a candidate layer unless a later phase explicitly promotes th
 4. Implement Memory Index retrieval/export so ChatGPT/Codex can use approved personal views and weekly conclusions.
 5. Replace or harden unstable Reuters RSSHub routes.
 6. Clean local repo changes, commit, and push to the intended GitHub repo.
+
+## Architecture Boundary
+
+- `VinInvestmentHub` is the active product direction.
+- The earlier Source Classifier MVP remains in this repo as a legacy/local utility for classification review, not as the primary product surface.
+- New automation should target Phase 6 Raw Signals and the Notion knowledge system first. Reuse legacy classifier modules only when they reduce duplication and do not reintroduce the old `VincentWorkPlaceVer2.0` direction.

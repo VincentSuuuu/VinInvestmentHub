@@ -31,3 +31,29 @@ Each substantial work session should also be summarized on the Notion homepage/a
 ### Verification
 
 - Latest local test run before this checkpoint: `27 passed`, with one third-party FastAPI/Starlette warning.
+
+## 2026-07-01 Adversarial Audit Archive
+
+### Scope
+
+- Rechecked project alignment after correcting `origin` to `VincentSuuuu/VinInvestmentHub`.
+- Audited Notion homepage, Research Desk, Core System, Phase 6 middleware, Raw Signals schema, local docs, scripts, and Git state for inconsistencies.
+- Applied Product Design audit framing to the navigation/workflow surface and brainstorming framing to the source plan.
+
+### Completed
+
+- Confirmed local `origin` is `https://github.com/VincentSuuuu/VinInvestmentHub.git`.
+- Confirmed `master` tracks `origin/master`.
+- Confirmed top-level Notion page now uses three primary doors: Research Desk, Intelligence Middleware, and System Console.
+- Confirmed Raw Signals schema contains `世界宏观`, promotion actions, duplicate key, and relations needed for the candidate-review loop.
+- Corrected README setup guidance so Raw Signals writes use `NOTION_RAW_SIGNALS_DATABASE_ID`.
+- Added the three-way archive rule to `docs/project-plan.md`.
+- Added `docs/adversarial-audit-2026-07-01.md` as the local audit report.
+- Created Notion archive page: `https://app.notion.com/p/3903b3ced2278138afbee8ad1a169646`.
+
+### Open Findings
+
+- Durable twice-daily Windows scheduling is still not registered because local scheduler APIs returned access denied without elevated PowerShell.
+- Raw Signals promotion to Knowledge Items / My Output / Event Hubs remains a manual rule, not a one-click or automated workflow.
+- Memory Index recall into ChatGPT/Codex remains designed but not implemented.
+- Reuters/RSSHub reliability is still the weakest external-source dependency.

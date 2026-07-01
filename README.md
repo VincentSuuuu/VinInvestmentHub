@@ -3,11 +3,12 @@
 Local automation tools for the Notion investment research OS. The original source classifier is still available, and Phase 6 adds a candidate-only external news intake for Raw Signals.
 
 Project plan checkpoint: `docs/project-plan.md`.
+Current project audit: `docs/adversarial-audit-2026-07-01.md`.
 
 ## Setup
 
 1. Copy `.env.example` to `.env`.
-2. Set `NOTION_TOKEN`, `NOTION_SOURCES_DATABASE_ID`, `NOTION_RAW_SIGNALS_DATA_SOURCE_ID`, and `OPENAI_API_KEY` if you want Notion writes.
+2. Set `NOTION_TOKEN` and `NOTION_RAW_SIGNALS_DATABASE_ID` for Raw Signals writes. Keep `NOTION_RAW_SIGNALS_DATA_SOURCE_ID` blank unless a future Notion data-source API path is explicitly enabled. Set `NOTION_SOURCES_DATABASE_ID` only when using the legacy Source Classifier, and set `OPENAI_API_KEY` only when running AI-assisted classification.
 3. Install dependencies:
 
 ```powershell
